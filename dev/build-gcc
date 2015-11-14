@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+
+set -x
+
+if [[ ! $# -eq 1 ]]
+then
+    echo "-- No branch or tag specified; cloning the default branch."
+    branch=""
+    branch_name=dev
+else
+    echo "-- Cloning $1."
+    branch="--branch gcc-$1-release"
+    branch_name=$1
+fi
+
+rm -rf gcc
+rm -rf built
+
+git clone git://gcc.gnu.org/git/gcc.git --depth=1 $branch gcc
+mkdir built
+
+gcc_dir=$(readlink -f ./gcc)
+built_dir=$(readlink -f ./built)
+
+docker run -v $gcc_dir:/gcc -v $built_dir:/built-gcc -it --rm ubuntu:wily /bin/bash -c '
+core_number=$(cat /proc/cpuinfo | grep processor -c)
+make_j=$(($core_number * 3 / 2))
+
+apt-get update
+apt-get install build-essential gcc g++ libgmp-dev libmpfr-dev libmpc-dev gcc-multilib g++-multilib flex bison sudo -y
+
+useradd builder
+sudo -u builder bash - << EOF
+
+cd gcc
+./configure --enable-languages=c,c++ --prefix=/usr
+
+make -j$make_j -l$core_number
+make DESTDIR=/built-gcc install
+
+EOF
+'
+exit_status=$?
+
+rm -rf gcc
+
+[[ $exit_status -eq 0 ]] || echo "Building GCC failed." && exit 1
+
+pushd built/usr/bin
+ln -sf gcc cc
+ln -sf g++ c++
+popd
+
+echo "-- Creating final image."
+
+docker rm gcc-$branch_name
+docker run -it --name gcc-$branch_name_ ubuntu:wily true
+docker cp ./built gcc-$branch_name:/
+
+docker commit gcc-$branch_name gcc:$branch_name
+
