@@ -58,9 +58,13 @@ popd
 
 echo "-- Creating final image."
 
+set -e
+
 docker rm gcc-$branch_name || true
-docker run --name gcc-$branch_name ubuntu:wily true
-docker cp ./built gcc-$branch_name:/
+docker run --name gcc-$branch_name ubuntu:wily /bin/bash -c '
+apt-get update && apt-get install make -y && apt-get clean
+'
+docker cp ./built/. gcc-$branch_name:/
 
 docker commit gcc-$branch_name gcc:$branch_name
 
