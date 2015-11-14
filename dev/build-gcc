@@ -16,7 +16,7 @@ fi
 rm -rf gcc
 rm -rf built
 
-git clone git://gcc.gnu.org/git/gcc.git --depth=1 $branch gcc || echo "Couldn't clone GCC." && exit 1
+git clone git://gcc.gnu.org/git/gcc.git --depth=1 $branch gcc || { echo "Couldn't clone GCC."; exit 1; }
 mkdir built
 
 gcc_dir=$(readlink -f ./gcc)
@@ -44,7 +44,7 @@ exit_status=$?
 
 rm -rf gcc
 
-[[ $exit_status -eq 0 ]] || echo "Building GCC failed." && exit 1
+[[ $exit_status -eq 0 ]] || { echo "Building GCC failed."; exit 1; }
 
 pushd built/usr/bin
 ln -sf gcc cc
