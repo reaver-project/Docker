@@ -16,13 +16,13 @@ fi
 rm -rf gcc
 rm -rf built
 
-git clone git://gcc.gnu.org/git/gcc.git --depth=1 $branch gcc
+git clone git://gcc.gnu.org/git/gcc.git --depth=1 $branch gcc || echo "Couldn't clone GCC." && exit 1
 mkdir built
 
 gcc_dir=$(readlink -f ./gcc)
 built_dir=$(readlink -f ./built)
 
-docker run -v $gcc_dir:/gcc -v $built_dir:/built-gcc -it --rm ubuntu:wily /bin/bash -c '
+docker run -v $gcc_dir:/gcc -v $built_dir:/built-gcc --rm ubuntu:wily /bin/bash -c '
 core_number=$(cat /proc/cpuinfo | grep processor -c)
 make_j=$(($core_number * 3 / 2))
 
@@ -54,7 +54,7 @@ popd
 echo "-- Creating final image."
 
 docker rm gcc-$branch_name
-docker run -it --name gcc-$branch_name_ ubuntu:wily true
+docker run --name gcc-$branch_name_ ubuntu:wily true
 docker cp ./built gcc-$branch_name:/
 
 docker commit gcc-$branch_name gcc:$branch_name
