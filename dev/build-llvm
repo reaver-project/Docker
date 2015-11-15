@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+
+set -x
+
+if [[ ! $# -eq 1 ]]
+then
+    echo "-- No branch or tag specified; cloning the default branch."
+    branch=""
+    branch_name=dev
+else
+    echo "-- Cloning $1."
+    branch="--branch release_$1"
+    branch_name=$1
+fi
+
+rm -rf llvm
+rm -rf built
+
+git clone http://llvm.org/git/llvm.git --depth=1 $branch llvm || { echo "Couldn't clone LLVM."; exit 1; }
+
+pushd llvm/tools
+git clone http://llvm.org/git/clang.git --depth=1 $branch || { popd; echo "Couldn't clone Clang."; exit 1; }
+popd
+
+pushd llvm/projects
+git clone http://llvm.org/git/compiler-rt.git --depth=1 $branch || { popd; echo "Couldn't clone compiler-rt."; exit 1; }
+git clone http://llvm.org/git/libcxx.git --depth=1 $branch || { popd; echo "Couldn't clone libcxx."; exit 1; }
+git clone http://llvm.org/git/libcxxabi.git --depth=1 $branch || { popd; echo "Couldn't clone libcxxabi."; exit 1; }
+popd
+
+mkdir -p built/usr
+
+llvm_dir=$(readlink -f ./llvm)
+built_dir=$(readlink -f ./built)
+
+docker run -v $llvm_dir:/llvm -v $built_dir:/built-llvm --rm ubuntu:wily /bin/bash -c '
+core_number=$(cat /proc/cpuinfo | grep processor -c)
+make_j=$(($core_number * 3 / 2))
+
+apt-get update
+apt-get install build-essential gcc g++ sudo cmake python git -y
+
+TARGET_UID=$(stat -c "%u" /llvm)
+TARGET_GID=$(stat -c "%g" /llvm)
+
+groupadd -g $TARGET_GID builder
+useradd -u $TARGET_UID -g builder builder
+
+sudo -u builder bash - << EOF
+
+cd llvm
+mkdir build
+cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/built-llvm/usr
+
+make -j$make_j -l$core_number
+make install
+
+EOF
+'
+exit_status=$?
+
+rm -rf llvm
+
+[[ $exit_status -eq 0 ]] || { echo "Building llvm failed."; exit 1; }
+
+pushd built/usr/bin
+ln -sf clang cc
+ln -sf clang++ c++
+popd
+
+echo "-- Creating final image."
+
+set -e
+
+docker rm llvm-$branch_name || true
+docker run --name llvm-$branch_name ubuntu:wily /bin/bash -c '
+apt-get update && apt-get install make binutils libgcc-5-dev -y && apt-get clean
+'
+docker cp ./built/. llvm-$branch_name:/
+
+docker commit llvm-$branch_name llvm:$branch_name
+
