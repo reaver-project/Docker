@@ -51,20 +51,20 @@ rm -rf gcc
 
 [[ $exit_status -eq 0 ]] || { echo "Building GCC failed."; exit 1; }
 
+echo "-- Creating final image."
+
+set -e
+
 pushd built/usr/bin
 ln -sf gcc cc
 ln -sf g++ c++
 popd
 
-echo "-- Creating final image."
-
-set -e
-
 docker rm gcc-$branch_name || true
 docker run --name gcc-$branch_name ubuntu:wily /bin/bash -c '
-apt-get update && apt-get install make -y && apt-get clean
+apt-get update && apt-get install make libmpc3 libc-dev binutils -y && apt-get clean
 '
 docker cp ./built/. gcc-$branch_name:/
 
-docker commit gcc-$branch_name gcc:$branch_name
+docker commit --change='CMD ["true"]' gcc-$branch_name gcc:$branch_name
 
