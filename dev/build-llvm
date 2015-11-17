@@ -89,7 +89,7 @@ ld \$@ -lc++ -lc++abi -lpthread' > /usr/bin/clang-wrappers/ld
 
 chmod +x /usr/bin/clang-wrappers/*
 
-echo 'export PATH=/usr/bin/clang-wrappers:\$PATH' >> /etc/profile
+echo 'PATH=/usr/bin/clang-wrappers:\$PATH' >> /etc/environment
 "
 docker cp ./built/. llvm-$branch_name:/
 
