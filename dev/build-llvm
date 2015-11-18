@@ -66,32 +66,24 @@ rm -rf llvm
 
 echo "-- Creating final image."
 
-pushd built/usr/bin
-ln -sf clang cc
-popd
-
 set -e
 
-docker rm llvm-$branch_name || true
-docker run --name llvm-$branch_name ubuntu:wily /bin/bash -c "
-apt-get update && apt-get install make binutils libgcc-5-dev -y && apt-get clean
+pushd built/usr/bin
+ln -sf clang cc
 
 # create wrappers for clang++ and ld to use libc++ by default
 # when called through c++ (and, well, ld)
 # this is not an image for gcc, so we don't care about ld being somewhat broken for it this way
-
-mkdir /usr/bin/clang-wrappers
+mkdir clang-wrappers
+cd clang-wrappers
 
 echo '#!/bin/sh
-clang++ -stdlib=libc++ \$@' > /usr/bin/clang-wrappers/c++
+clang++ -stdlib=libc++ $@' > c++
 echo '#!/bin/sh
-ld \$@ -lc++ -lc++abi -lpthread' > /usr/bin/clang-wrappers/ld
+ld $@ -lc++ -lc++abi -lpthread' > ld
+chmod +x c++ ld
+popd
 
-chmod +x /usr/bin/clang-wrappers/*
-
-echo 'PATH=/usr/bin/clang-wrappers:\$PATH' >> /etc/environment
-"
-docker cp ./built/. llvm-$branch_name:/
-
-docker commit --change='CMD ["true"]' llvm-$branch_name llvm:$branch_name
+docker rm llvm-$branch_name || true
+docker build -f llvm.docker -t llvm:$branch_name .
 
