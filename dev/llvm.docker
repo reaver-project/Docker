@@ -1,0 +1,11 @@
+FROM ubuntu:wily
+MAINTAINER Michał 'Griwes' Dominiak <griwes@griwes.info>
+
+RUN apt-get update && apt-get install make binutils libgcc-5-dev -y && apt-get clean
+
+ENV PATH=/usr/bin/clang-wrappers:$PATH
+
+COPY ./built /
+
+CMD bash
+
