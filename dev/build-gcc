@@ -13,7 +13,7 @@ else
     branch_name=$1
 fi
 
-PWD=$(dirname $(realpath -s "${BASH_SOURCE[0]}"))
+current_dir=$(dirname $(realpath -s "${BASH_SOURCE[0]}"))
 
 rm -rf gcc
 rm -rf built
@@ -63,5 +63,5 @@ ln -sf g++ c++
 popd
 
 docker rm gcc-$branch_name || true
-docker build -f $PWD/gcc.docker -t gcc:$branch_name .
+docker build -f $current_dir/gcc.docker -t gcc:$branch_name .
 

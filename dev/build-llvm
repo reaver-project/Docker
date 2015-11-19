@@ -13,7 +13,7 @@ else
     branch_name=$1
 fi
 
-PWD=$(dirname $(realpath -s "${BASH_SOURCE[0]}"))
+current_dir=$(dirname $(realpath -s "${BASH_SOURCE[0]}"))
 
 rm -rf llvm
 rm -rf built
@@ -87,5 +87,5 @@ chmod +x c++ ld
 popd
 
 docker rm llvm-$branch_name || true
-docker build -f $PWD/llvm.docker -t llvm:$branch_name .
+docker build -f $current_dir/llvm.docker -t llvm:$branch_name .
 
