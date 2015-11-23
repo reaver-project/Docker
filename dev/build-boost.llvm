@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+
+set -x
+
+if [[ ! $# -ge 1 ]]
+then
+    echo "-- No base image specified; aborting."
+    exit 1
+fi
+
+base_image=$1
+
+if [[ ! $# -eq 2 ]]
+then
+    echo "-- No branch or tag specified; cloning the default branch."
+    branch=""
+    branch_name="dev"
+else
+    echo "-- Cloning $2."
+    branch="--branch boost-$2"
+    branch_name=$2
+fi
+
+current_dir=$(dirname $(realpath -s "${BASH_SOURCE[0]}"))
+base_image_prefix=$(echo $base_image | sed -re 's#([^/]*/)?([^:]*):(.*)#\2-\3#')
+
+rm -rf boost
+rm -rf built
+
+git clone https://github.com/boostorg/boost.git --recursive --depth=1 $branch boost || { echo "Couldn't clone Boost."; exit 1; }
+mkdir built
+
+boost_dir=$(readlink -f ./boost)
+built_dir=$(readlink -f ./built)
+
+docker run -v $boost_dir:/boost -v $built_dir:/built-boost --rm $1 /bin/bash -c '
+core_number=$(cat /proc/cpuinfo | grep processor -c)
+make_j=$(($core_number * 3 / 4))
+
+apt-get update
+apt-get install sudo libbz2-dev -y
+
+TARGET_UID=$(stat -c "%u" /boost)
+TARGET_GID=$(stat -c "%g" /boost)
+
+groupadd -g $TARGET_GID builder
+useradd -u $TARGET_UID -g builder builder
+
+sudo -u builder bash - << EOF
+
+cd /boost
+./bootstrap.sh --without-libraries=log --without-libraries=test --with-toolset=clang || exit 1
+./b2 cxxflags="-std=c++11 -stdlib=libc++" linkflags="-stdlib=libc++ -lc++abi" --toolset=clang -j$make_j headers || exit 1
+./b2 cxxflags="-std=c++11 -stdlib=libc++" linkflags="-stdlib=libc++ -lc++abi" --toolset=clang -j$make_j stage || exit 1
+./b2 -j$make_j install --prefix=/built-boost/usr || exit 1
+
+EOF
+'
+exit_status=$?
+
+exit 0
+
+rm -rf boost
+
+[[ $exit_status -eq 0 ]] || { echo "Building Boost failed."; exit 1; }
+
+echo "-- Creating final image."
+
+set -e
+
+dockertemplate=$current_dir/boost.docker
+dockerfile=$dockertemplate.$$
+
+base_image=$base_image envsubst < $dockertemplate > $dockerfile
+docker build -f $dockerfile -t $base_image_prefix-boost:$branch_name .
+rm $dockerfile
+

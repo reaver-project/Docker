@@ -1,0 +1,7 @@
+FROM ${base_image}
+MAINTAINER Michał 'Griwes' Dominiak <griwes@griwes.info>
+
+COPY ./built /
+
+CMD bash
+
