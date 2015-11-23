@@ -62,6 +62,5 @@ ln -sf gcc cc
 ln -sf g++ c++
 popd
 
-docker rm gcc-$branch_name || true
 docker build -f $current_dir/gcc.docker -t gcc:$branch_name .
 

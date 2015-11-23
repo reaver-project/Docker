@@ -86,6 +86,5 @@ ld $@ -lc++ -lc++abi -lpthread' > ld
 chmod +x c++ ld
 popd
 
-docker rm llvm-$branch_name || true
 docker build -f $current_dir/llvm.docker -t llvm:$branch_name .
 
