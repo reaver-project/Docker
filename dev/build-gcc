@@ -18,7 +18,7 @@ current_dir=$(dirname $(realpath -s "${BASH_SOURCE[0]}"))
 rm -rf gcc
 rm -rf built
 
-git clone https://gcc.gnu.org/git/gcc.git --depth=1 $branch gcc || { echo "Couldn't clone GCC."; exit 1; }
+git clone https://github.com/gcc-mirror/gcc.git --depth=1 $branch gcc || { echo "Couldn't clone GCC."; exit 1; }
 mkdir built
 
 gcc_dir=$(readlink -f ./gcc)
