@@ -38,12 +38,12 @@ if [[ $UID -ne $TARGET_UID ]]
 then
     groupadd -g $TARGET_GID builder
     useradd -u $TARGET_UID -g builder builder
-    user=builder
+    command=sudo -u builder bash
 else
-    user=$USER
+    command=bash
 fi
 
-sudo -u $user bash - << EOF
+$command - << EOF
 
 cd gcc
 ./configure --enable-languages=c,c++ --prefix=/usr
