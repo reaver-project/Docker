@@ -19,7 +19,7 @@ then
     fi
 fi
 
-sed -re "s/^.*ownAddress.*$/ownAddress=$(ip addr show eth0 | egrep -o '([0-9]{1,3}.){3}[0-9]{1,3}')/" -i conf/buildAgent.properties
+sed -re "s/^.*ownAddress.*$/ownAddress=$(ip addr show eth0 | egrep -o '([0-9]{1,3}\.){3}[0-9]{1,3}')/" -i conf/buildAgent.properties
 sed -re "s/^name=.*$/name=${name_prefix}$(hostname)/" -i conf/buildAgent.properties
 
 cat conf/buildAgent.properties
