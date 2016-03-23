@@ -24,7 +24,7 @@ mkdir built
 gcc_dir=$(readlink -f ./gcc)
 built_dir=$(readlink -f ./built)
 
-docker run -v $gcc_dir:/gcc -v $built_dir:/built-gcc --rm ubuntu:wily /bin/bash -c '
+docker run -v $gcc_dir:/gcc -v $built_dir:/built-gcc --rm -e http_proxy=${http_proxy} -e https_proxy=${https_proxy} ubuntu:wily /bin/bash -c '
 core_number=$(cat /proc/cpuinfo | grep processor -c)
 make_j=$(($core_number * 3 / 2))
 
