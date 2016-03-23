@@ -43,7 +43,7 @@ else
     user=$USER
 fi
 
-sudo -u builder bash - << EOF
+sudo -u $user bash - << EOF
 
 cd gcc
 ./configure --enable-languages=c,c++ --prefix=/usr
