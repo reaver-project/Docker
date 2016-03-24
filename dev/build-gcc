@@ -34,7 +34,8 @@ git clone https://github.com/gcc-mirror/gcc.git --depth=1 $branch gcc || { echo 
 cd gcc
 ./configure --enable-languages=c,c++ --prefix=/usr
 
-make -j$make_j -l$core_number && make DESTDIR=/built-gcc install || {
+make -j$make_j -l$core_number && make DESTDIR=/built-gcc install
+' || {
     docker rm ${container_name}
     echo "Building GCC failed."
     exit 1
