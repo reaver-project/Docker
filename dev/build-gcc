@@ -45,7 +45,7 @@ echo "-- Creating final image."
 set -e
 
 docker cp ${container_name}:/built-gcc ./built
-docker rm $(container_name}
+docker rm ${container_name}
 
 pushd built/usr/bin
 ln -sf gcc cc
