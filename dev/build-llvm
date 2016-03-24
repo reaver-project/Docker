@@ -13,8 +13,6 @@ else
     branch_name=$1
 fi
 
-current_dir=$(dirname $(realpath -s "${BASH_SOURCE[0]}"))
-
 rm -rf built
 
 container_name=build-gcc-$(hostname)-$$
@@ -28,9 +26,9 @@ apt-get install build-essential gcc g++ sudo cmake python git -y
 
 mkdir /built
 
-cd llvm
-
 git clone http://llvm.org/git/llvm.git --depth=1 $branch llvm || { echo "Couldn'"'"'t clone LLVM."; exit 1; }
+
+cd llvm
 
 pushd tools
 git clone http://llvm.org/git/clang.git --depth=1 $branch || { popd; echo "Couldn'"'"'t clone Clang."; exit 1; }
