@@ -15,60 +15,52 @@ fi
 
 current_dir=$(dirname $(realpath -s "${BASH_SOURCE[0]}"))
 
-rm -rf llvm
 rm -rf built
 
-git clone http://llvm.org/git/llvm.git --depth=1 $branch llvm || { echo "Couldn't clone LLVM."; exit 1; }
+container_name=build-gcc-$(hostname)-$$
 
-pushd llvm/tools
-git clone http://llvm.org/git/clang.git --depth=1 $branch || { popd; echo "Couldn't clone Clang."; exit 1; }
-popd
-
-pushd llvm/projects
-git clone http://llvm.org/git/compiler-rt.git --depth=1 $branch || { popd; echo "Couldn't clone compiler-rt."; exit 1; }
-git clone http://llvm.org/git/libcxx.git --depth=1 $branch || { popd; echo "Couldn't clone libcxx."; exit 1; }
-git clone http://llvm.org/git/libcxxabi.git --depth=1 $branch || { popd; echo "Couldn't clone libcxxabi."; exit 1; }
-popd
-
-mkdir -p built/usr
-
-llvm_dir=$(readlink -f ./llvm)
-built_dir=$(readlink -f ./built)
-
-docker run -v $llvm_dir:/llvm -v $built_dir:/built-llvm --rm ubuntu:wily /bin/bash -c '
+docker run --name "${container_name}" -e branch="${branch}" -e http_proxy=${http_proxy} -e https_proxy=${https_proxy} ubuntu:wily /bin/bash -c '
 core_number=$(cat /proc/cpuinfo | grep processor -c)
 make_j=$(($core_number * 3 / 2))
 
 apt-get update
 apt-get install build-essential gcc g++ sudo cmake python git -y
 
-TARGET_UID=$(stat -c "%u" /llvm)
-TARGET_GID=$(stat -c "%g" /llvm)
-
-groupadd -g $TARGET_GID builder
-useradd -u $TARGET_UID -g builder builder
-
-sudo -u builder bash - << EOF
+mkdir /built
 
 cd llvm
+
+git clone http://llvm.org/git/llvm.git --depth=1 $branch llvm || { echo "Couldn'"'"'t clone LLVM."; exit 1; }
+
+pushd tools
+git clone http://llvm.org/git/clang.git --depth=1 $branch || { popd; echo "Couldn'"'"'t clone Clang."; exit 1; }
+popd
+
+pushd projects
+git clone http://llvm.org/git/compiler-rt.git --depth=1 $branch || { popd; echo "Couldn'"'"'t clone compiler-rt."; exit 1; }
+git clone http://llvm.org/git/libcxx.git --depth=1 $branch || { popd; echo "Couldn'"'"'t clone libcxx."; exit 1; }
+git clone http://llvm.org/git/libcxxabi.git --depth=1 $branch || { popd; echo "Couldn'"'"'t clone libcxxabi."; exit 1; }
+popd
+
 mkdir build
 cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/built-llvm/usr
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/built/usr
 
 make -j$make_j -l$core_number
 make install
 
-EOF
-'
-exit_status=$?
-
-rm -rf llvm
-
-[[ $exit_status -eq 0 ]] || { echo "Building llvm failed."; exit 1; }
+' || {
+    docker rm ${container_name}
+    echo "Building llvm failed."
+    exit 1
+}
 
 echo "-- Creating final image."
 
 set -e
+
+docker cp ${container_name}:/built ./built
+docker rm ${container_name}
 
 pushd built/usr/bin
 ln -sf clang cc
@@ -86,5 +78,5 @@ ld $@ -lc++ -lc++abi -lpthread' > ld
 chmod +x c++ ld
 popd
 
-docker build -f $current_dir/llvm.docker -t llvm:$branch_name .
+docker build -f $current_dir/llvm.docker --build-arg http_proxy=${http_proxy} --build-arg https_proxy=${https_proxy} -t llvm:$branch_name .
 
