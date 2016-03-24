@@ -53,5 +53,5 @@ ln -sf gcc cc
 ln -sf g++ c++
 popd
 
-docker build -f $current_dir/gcc.docker -t gcc:$branch_name .
+docker build -f $current_dir/gcc.docker --build-arg http_proxy=${http_proxy} https_proxy=${https_proxy} -t gcc:$branch_name .
 

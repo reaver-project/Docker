@@ -1,6 +1,12 @@
 FROM ubuntu:wily
 MAINTAINER Michał 'Griwes' Dominiak <griwes@griwes.info>
 
+ARG http_proxy=
+ARG https_proxy=
+
+ENV http_proxy ${http_proxy}
+ENV https_proxy ${https_proxy}
+
 RUN apt-get update && apt-get install make libmpc3 libc-dev binutils -y && apt-get clean
 
 COPY ./built /
