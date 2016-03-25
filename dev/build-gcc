@@ -32,7 +32,7 @@ mkdir /built
 
 git clone https://github.com/gcc-mirror/gcc.git --depth=1 $branch gcc || { echo "Couldn'"'"'t clone GCC."; exit 1; }
 cd gcc
-./configure --enable-languages=c,c++ --prefix=/usr --disable-bootstrap
+./configure --enable-languages=c,c++ --prefix=/usr
 
 make -j$make_j -l$core_number && make DESTDIR=/built install
 ' || {
