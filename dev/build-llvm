@@ -13,6 +13,8 @@ else
     branch_name=$1
 fi
 
+current_dir=$(dirname $(realpath -s "${BASH_SOURCE[0]}"))
+
 rm -rf built
 
 container_name=build-gcc-$(hostname)-$$
