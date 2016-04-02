@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+
+set -x
+
+if [[ ! $# -ge 1 ]]
+then
+    echo "-- No base image specified; aborting."
+    exit 1
+fi
+
+base_image=$1
+
+if [[ ! $# -eq 2 ]]
+then
+    echo "-- No branch or tag specified; cloning the default branch."
+    branch=""
+    branch_name="dev"
+else
+    echo "-- Cloning $2."
+    branch="--branch boost-$2"
+    branch_name=$2
+fi
+
+current_dir=$(dirname $(realpath -s "${BASH_SOURCE[0]}"))
+base_image_name=$(echo $base_image | sed -re 's#([^/]*/)?([^:]*):(.*)#\2#')
+base_image_version=$(echo $base_image | sed -re 's#([^/]*/)?([^:]*):(.*)#\3#')
+
+rm -rf built
+
+container_name=build-boost-${base_image_name}-$(hostname)-$$
+
+docker run --name "${container_name}" -e branch="${branch}" -e http_proxy=${http_proxy} -e https_proxy=${https_proxy} -e base="${base_image_name}" $1 /bin/bash -c '
+set -x
+
+core_number=$(cat /proc/cpuinfo | grep processor -c)
+make_j=$(($core_number * 3 / 4))
+
+apt-get update
+apt-get install sudo libbz2-dev git -y
+
+git clone https://github.com/boostorg/boost.git --recursive --depth=1 $branch boost || { echo "Couldn'"'"'t clone Boost."; exit 1; }
+mkdir /built
+
+cd /boost
+if [[ "${base}" == "gcc" ]]
+then
+    ./bootstrap.sh --without-libraries=log --without-libraries=test || exit 1
+    ./b2 cxxflags="-std=c++11" -j$make_j headers || exit 1
+    ./b2 cxxflags="-std=c++11" -j$make_j stage || exit 1
+    ./b2 -j$make_j install --prefix=/built/usr || exit 1
+elif [[ "${base}" == "llvm" ]]
+then
+    ./bootstrap.sh --without-libraries=log --without-libraries=test --with-toolset=clang || exit 1
+    ./b2 cxxflags="-std=c++11 -stdlib=libc++" linkflags="-stdlib=libc++ -lc++abi" --toolset=clang -j$make_j headers || exit 1
+    ./b2 cxxflags="-std=c++11 -stdlib=libc++" linkflags="-stdlib=libc++ -lc++abi" --toolset=clang -j$make_j stage || exit 1
+    ./b2 -j$make_j install --prefix=/built/usr || exit 1
+else
+    echo "Unsupported base image."
+    exit 1
+fi
+' || {
+    docker rm ${container_name}
+    echo "Building Boost failed."
+    exit 1
+}
+
+echo "-- Creating final image."
+
+set -e
+
+docker cp ${container_name}:/built ./built
+docker rm ${container_name}
+
+dockertemplate=$current_dir/boost.docker
+dockerfile=$dockertemplate.$$
+
+base_image=$base_image envsubst < $dockertemplate > $dockerfile
+docker build -f $dockerfile -t $base_image_name-boost:$base_image_version-$branch_name .
+rm $dockerfile
+
