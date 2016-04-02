@@ -20,6 +20,8 @@ rm -rf built
 container_name=build-gcc-$(hostname)-$$
 
 docker run --name "${container_name}" -e branch="${branch}" -e http_proxy=${http_proxy} -e https_proxy=${https_proxy} ubuntu:wily /bin/bash -c '
+set -x
+
 core_number=$(cat /proc/cpuinfo | grep processor -c)
 make_j=$(($core_number * 3 / 2))
 
