@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install apt-transport-https ca-certificates -y && 
     && apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
 RUN echo 'deb https://apt.dockerproject.org/repo debian-jessie main' > /etc/apt/sources.list.d/docker.list
  
-RUN apt-get update && apt-get install -y git subversion docker-engine python libgit2-dev python-dev python-pip netcat-openbsd && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y git subversion docker-engine python libgit2-dev python-dev python-pip netcat-openbsd gettext && rm -rf /var/lib/apt/lists/*
 RUN pip install pygit2==0.21.0 slumber
 
 ADD entry.sh /entry.sh
