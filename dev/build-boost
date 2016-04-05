@@ -64,12 +64,19 @@ fi
     exit 1
 }
 
-echo "-- Creating final image."
-
 set -e
+
+echo "-- Adding the unofficial Boost.Process." # hopefully this can go away at some point...
+
+rm -rf boost-process
+git clone https://github.com/griwes/boost-process.git
+
+echo "-- Creating final image."
 
 docker cp ${container_name}:/built ./built
 docker rm ${container_name}
+
+cp -r boost-process/boost ./built/usr/include/
 
 dockertemplate=$current_dir/boost.docker
 dockerfile=$dockertemplate.$$
