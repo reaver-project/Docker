@@ -76,8 +76,12 @@ cd clang-wrappers
 echo '#!/bin/sh
 clang++ -stdlib=libc++ $@' > c++
 echo '#!/bin/sh
-ld $@ -lc++ -lc++abi -lpthread' > ld
+/usr/bin/ld.orig $@ -lc++ -lc++abi -lpthread' > ld
 chmod +x c++ ld
+
+cd ..
+mv ld ld.orig
+ln -sf /usr/bin/clang-wrappers/ld /usr/bin/ld
 popd
 
 docker build -f $current_dir/llvm.docker --build-arg http_proxy=${http_proxy} --build-arg https_proxy=${https_proxy} -t llvm:$branch_name .
