@@ -1,4 +1,4 @@
-FROM ubuntu:wily
+FROM ubuntu:xenial
 MAINTAINER Michał 'Griwes' Dominiak <griwes@griwes.info>
 
 ARG http_proxy=
