@@ -50,7 +50,7 @@ then
     ./b2 -j$make_j install --prefix=/built/usr || exit 1
 elif [[ "${base}" == "llvm" ]]
 then
-    ./bootstrap.sh --without-libraries=log --without-libraries=test --with-toolset=clang || exit 1
+    ./bootstrap.sh --without-libraries=python --without-libraries=log --without-libraries=test --with-toolset=clang || exit 1
     ./b2 cxxflags="-std=c++11 -stdlib=libc++" linkflags="-stdlib=libc++ -lc++abi" --toolset=clang -j$make_j headers || exit 1
     ./b2 cxxflags="-std=c++11 -stdlib=libc++" linkflags="-stdlib=libc++ -lc++abi" --toolset=clang -j$make_j stage || exit 1
     ./b2 -j$make_j install --prefix=/built/usr || exit 1
