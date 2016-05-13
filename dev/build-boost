@@ -44,7 +44,7 @@ mkdir /built
 cd /boost
 if [[ "${base}" == "gcc" ]]
 then
-    ./bootstrap.sh --without-libraries=log --without-libraries=test || exit 1
+    ./bootstrap.sh --without-libraries=python --without-libraries=log --without-libraries=test || exit 1
     ./b2 cxxflags="-std=c++11" -j$make_j headers || exit 1
     ./b2 cxxflags="-std=c++11" -j$make_j stage || exit 1
     ./b2 -j$make_j install --prefix=/built/usr || exit 1
