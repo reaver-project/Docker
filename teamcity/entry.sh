@@ -7,11 +7,11 @@ then
     mkdir -p /agent
     cd /agent
 
-    wget http://${server}/update/buildAgent.zip
+    wget ${server}/update/buildAgent.zip
     unzip buildAgent.zip
     chmod +x ./bin/agent.sh
 
-    sed "s/localhost:8111/${server}/" < conf/buildAgent.dist.properties > conf/buildAgent.properties
+    sed "s#http://localhost:8111#${server}#" < conf/buildAgent.dist.properties > conf/buildAgent.properties
 
     if [[ ! -z "${special_config}" ]]
     then
