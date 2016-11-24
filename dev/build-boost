@@ -29,7 +29,7 @@ rm -rf built
 
 container_name=build-boost-${base_image_name}-$(hostname)-$$
 
-docker run --name "${container_name}" -e branch="${branch}" -e http_proxy=${http_proxy} -e https_proxy=${https_proxy} -e base="${base_image_name}" $1 /bin/bash -c '
+docker run -t --name "${container_name}" -e branch="${branch}" -e http_proxy=${http_proxy} -e https_proxy=${https_proxy} -e base="${base_image_name}" $1 /bin/bash -c '
 set -x
 
 core_number=$(cat /proc/cpuinfo | grep processor -c)
