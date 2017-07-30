@@ -1,4 +1,4 @@
-FROM ubuntu:yakkety
+FROM ubuntu:rolling
 MAINTAINER Michał 'Griwes' Dominiak <griwes@griwes.info>
 
 ARG http_proxy=
