@@ -46,7 +46,7 @@ popd
 
 mkdir build
 cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/built/usr
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/built/usr/local
 
 make -j$make_j -l$core_number
 make install
@@ -64,7 +64,7 @@ set -e
 docker cp ${container_name}:/built ./built
 docker rm ${container_name}
 
-pushd built/usr/bin
+pushd built/usr/local/bin
 ln -sf clang cc
 
 # create wrappers for clang++ and ld to use libc++ by default

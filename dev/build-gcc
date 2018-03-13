@@ -32,7 +32,7 @@ mkdir /built
 
 git clone https://github.com/gcc-mirror/gcc.git --depth=1 $branch gcc || { echo "Couldn'"'"'t clone GCC."; exit 1; }
 cd gcc
-./configure --enable-languages=c,c++ --prefix=/usr
+./configure --enable-languages=c,c++ --prefix=/usr/local
 
 make -j$make_j -l$core_number && make DESTDIR=/built install
 ' || {
@@ -48,7 +48,7 @@ set -e
 docker cp ${container_name}:/built ./built
 docker rm ${container_name}
 
-pushd built/usr/bin
+pushd built/usr/local/bin
 ln -sf gcc cc
 ln -sf g++ c++
 popd
