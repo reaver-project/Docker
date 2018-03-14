@@ -6,10 +6,10 @@ ARG https_proxy=
 
 RUN export http_proxy=${http_proxy}; export https_proxy=${https_proxy}; apt-get update && apt-get install make binutils libgcc-5-dev -y && apt-get clean
 
-ENV PATH=/usr/bin/clang-wrappers:$PATH
+ENV PATH=/usr/local/bin/clang-wrappers:$PATH
 
 COPY ./built /
-RUN mv /usr/bin/ld /usr/bin/ld.orig; ln -sf /usr/bin/clang-wrappers/ld /usr/bin/ld
+RUN mv /usr/bin/ld /usr/bin/ld.orig; ln -sf /usr/local/bin/clang-wrappers/ld /usr/bin/ld
 
 CMD bash
 
