@@ -8,8 +8,8 @@ then
     branch=""
     branch_name=dev
 else
-    echo "-- Cloning $1."
-    branch="--branch release_$1"
+    echo "-- Cloning llvmorg-$1."
+    branch="--branch llvmorg-$1"
     branch_name=$1
 fi
 
@@ -17,7 +17,7 @@ current_dir=$(dirname $(realpath -s "${BASH_SOURCE[0]}"))
 
 rm -rf built
 
-container_name=build-gcc-$(hostname)-$$
+container_name=build-llvm-$(hostname)-$$
 
 docker run --name "${container_name}" -e branch="${branch}" -e http_proxy=${http_proxy} -e https_proxy=${https_proxy} ubuntu:rolling /bin/bash -c '
 set -x
@@ -30,27 +30,16 @@ apt-get install build-essential gcc g++ sudo cmake python git -y
 
 mkdir /built
 
-git clone http://llvm.org/git/llvm.git --depth=1 $branch llvm || { echo "Couldn'"'"'t clone LLVM."; exit 1; }
+git clone https://github.com/llvm/llvm-project.git --depth=1 $branch llvm || { echo "Couldn'"'"'t clone LLVM."; exit 1; }
 
-cd llvm
-
-pushd tools
-git clone http://llvm.org/git/clang.git --depth=1 $branch || { popd; echo "Couldn'"'"'t clone Clang."; exit 1; }
-popd
-
-pushd projects
-git clone http://llvm.org/git/compiler-rt.git --depth=1 $branch || { popd; echo "Couldn'"'"'t clone compiler-rt."; exit 1; }
-git clone http://llvm.org/git/libcxx.git --depth=1 $branch || { popd; echo "Couldn'"'"'t clone libcxx."; exit 1; }
-git clone http://llvm.org/git/libcxxabi.git --depth=1 $branch || { popd; echo "Couldn'"'"'t clone libcxxabi."; exit 1; }
-popd
+cd llvm/llvm
 
 mkdir build
 cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/built/usr/local
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/built/usr/local -DLLVM_ENABLE_PROJECTS="clang;libcxx;libcxxabi;compiler-rt;lld"
 
 make -j$make_j -l$core_number
 make install
-
 ' || {
     docker rm ${container_name}
     echo "Building llvm failed."
@@ -76,7 +65,7 @@ cd clang-wrappers
 echo '#!/bin/sh
 clang++ -stdlib=libc++ $@' > c++
 echo '#!/bin/sh
-/usr/bin/ld.orig $@ -lc++ -lc++abi -lpthread' > ld
+ld.lld $@ -lc++ -lc++abi -lpthread' > ld
 chmod +x c++ ld
 popd
 

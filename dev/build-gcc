@@ -9,7 +9,7 @@ then
     branch_name=dev
 else
     echo "-- Cloning $1."
-    branch="--branch gcc-$1-release"
+    branch="--branch releases/gcc-$1"
     branch_name=$1
 fi
 

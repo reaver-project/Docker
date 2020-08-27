@@ -9,7 +9,7 @@ RUN export http_proxy=${http_proxy}; export https_proxy=${https_proxy}; apt-get 
 ENV PATH=/usr/local/bin/clang-wrappers:$PATH
 
 COPY ./built /
-RUN mv /usr/bin/ld /usr/bin/ld.orig; ln -sf /usr/local/bin/clang-wrappers/ld /usr/bin/ld; ln -sf /usr/bin/cc /usr/local/bin/clang-wrappers/cc
+RUN mv /usr/bin/ld /usr/bin/ld.orig; ln -sf /usr/local/bin/clang-wrappers/ld /usr/bin/ld; ln -sf /usr/local/bin/cc /usr/local/bin/clang-wrappers/cc
 
 CMD bash
 
