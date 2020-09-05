@@ -1,10 +1,7 @@
-FROM ubuntu:rolling
+FROM debian:stable
 MAINTAINER Michał 'Griwes' Dominiak <griwes@griwes.info>
 
-ARG http_proxy=
-ARG https_proxy=
-
-RUN export http_proxy=${http_proxy}; export https_proxy=${https_proxy}; apt-get update && apt-get install make libmpc3 libc-dev binutils -y && apt-get clean
+RUN apt-get update && apt-get install make libmpc3 libc-dev binutils -y && apt-get clean
 
 COPY ./built /
 

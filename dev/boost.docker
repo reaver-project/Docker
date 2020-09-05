@@ -1,4 +1,5 @@
-FROM ${base_image}
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
 MAINTAINER Michał 'Griwes' Dominiak <griwes@griwes.info>
 
 COPY ./built /

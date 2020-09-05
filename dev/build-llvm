@@ -19,14 +19,15 @@ rm -rf built
 
 container_name=build-llvm-$(hostname)-$$
 
-docker run --name "${container_name}" -e branch="${branch}" -e http_proxy=${http_proxy} -e https_proxy=${https_proxy} ubuntu:rolling /bin/bash -c '
+docker run --name "${container_name}" -e branch="${branch}" debian:stable /bin/bash -c '
 set -x
 
 core_number=$(cat /proc/cpuinfo | grep processor -c)
 make_j=$(($core_number * 3 / 2))
 
+export DEBIAN_FRONTEND=noninteractive
 apt-get update
-apt-get install build-essential gcc g++ sudo cmake python git -y
+apt-get -o Dpkg::Options::=--force-confold -o Dpkg::Options::=--force-confdef install build-essential gcc g++ sudo cmake python git -y
 
 mkdir /built
 
@@ -69,5 +70,5 @@ ld.lld $@ -lc++ -lc++abi -lpthread' > ld
 chmod +x c++ ld
 popd
 
-docker build -f $current_dir/llvm.docker --build-arg http_proxy=${http_proxy} --build-arg https_proxy=${https_proxy} -t llvm:$branch_name .
+docker build -f $current_dir/llvm.docker -t llvm:$branch_name .
 

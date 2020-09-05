@@ -19,14 +19,15 @@ rm -rf built
 
 container_name=build-gcc-$(hostname)-$$
 
-docker run --name "${container_name}" -e branch="${branch}" -e http_proxy=${http_proxy} -e https_proxy=${https_proxy} ubuntu:rolling /bin/bash -c '
+docker run --name "${container_name}" -e branch="${branch}" debian:stable /bin/bash -c '
 set -x
 
 core_number=$(cat /proc/cpuinfo | grep processor -c)
 make_j=$(($core_number * 3 / 2))
 
+export DEBIAN_FRONTEND=noninteractive
 apt-get update
-apt-get install build-essential gcc g++ libgmp-dev libmpfr-dev libmpc-dev gcc-multilib g++-multilib flex bison git -y
+apt-get -o Dpkg::Options::=--force-confold -o Dpkg::Options::=--force-confdef install build-essential gcc g++ libgmp-dev libmpfr-dev libmpc-dev gcc-multilib g++-multilib flex bison git -y
 
 mkdir /built
 
@@ -53,5 +54,5 @@ ln -sf gcc cc
 ln -sf g++ c++
 popd
 
-docker build -f $current_dir/gcc.docker --build-arg http_proxy=${http_proxy} --build-arg https_proxy=${https_proxy} -t gcc:$branch_name .
+docker build -f $current_dir/gcc.docker -t gcc:$branch_name .
 

@@ -29,14 +29,15 @@ rm -rf built
 
 container_name=build-boost-${base_image_name}-$(hostname)-$$
 
-docker run --name "${container_name}" -e branch="${branch}" -e http_proxy=${http_proxy} -e https_proxy=${https_proxy} -e base="${base_image_name}" $1 /bin/bash -c '
+docker run --name "${container_name}" -e branch="${branch}" -e base="${base_image_name}" $1 /bin/bash -c '
 set -x
 
 core_number=$(cat /proc/cpuinfo | grep processor -c)
 make_j=$(($core_number * 3 / 4))
 
+export DEBIAN_FRONTEND=noninteractive
 apt-get update
-apt-get install sudo libbz2-dev git -y
+apt-get -o Dpkg::Options::=--force-confold -o Dpkg::Options::=--force-confdef install sudo libbz2-dev git -y
 
 git clone https://github.com/boostorg/boost.git --recurse-submodules --shallow-submodules -j${core_number} --depth=1 $branch boost || { echo "Couldn'"'"'t clone Boost."; exit 1; }
 mkdir /built
@@ -74,10 +75,5 @@ echo "-- Creating final image."
 docker cp ${container_name}:/built ./built
 docker rm ${container_name}
 
-dockertemplate=$current_dir/boost.docker
-dockerfile=$dockertemplate.$$
-
-base_image=$base_image envsubst < $dockertemplate > $dockerfile
-docker build -f $dockerfile -t $base_image_name-boost:$base_image_version-$branch_name .
-rm $dockerfile
+docker build -f $current_dir/boost.docker --build-arg BASE_IMAGE=$base_image_name:$base_image_version -t $base_image_name-boost:$base_image_version-$branch_name
 
